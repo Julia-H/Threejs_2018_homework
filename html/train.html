@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>three.js webgl - convex geometry</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		body {
+			font-family: Monospace;
+			background-color: rgb(142, 142, 142);
+			margin: 0px;
+			overflow: hidden;
+		}
+	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/96/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+	<script>
+		var group, camera, scene, renderer, controls;
+		var train, block, mesh;
+		var angle = 0;
+
+		var clock = new THREE.Clock();
+		var force = new THREE.Vector3(); //加速程度
+		
+		var power = 0;
+		var pos = new THREE.Vector3(0, 0, 0); //方向A
+		var vel = new THREE.Vector3(0, 0, 0); //方向B
+		//用A和B可以得出前進方向
+
+
+		init();
+		animate();
+
+		function init() {
+
+			scene = new THREE.Scene();
+			renderer = new THREE.WebGLRenderer({
+				antialias: true
+			});
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.setClearColor(0xe0e0e0);
+			document.body.appendChild(renderer.domElement);
+
+			// camera
+
+			camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
+			camera.position.set(50, 50, 100);
+			scene.add(camera);
+
+			// helper
+			scene.add(new THREE.GridHelper(100, 10, 'red', 'white'));
+			scene.add(new THREE.AxesHelper(10));
+
+			controls = new THREE.OrbitControls(camera);
+
+			train = new THREE.Group();
+
+			let geometry = new THREE.BoxGeometry(40, 10, 20);
+			let material = new THREE.MeshNormalMaterial();
+			mesh = new THREE.Mesh(geometry, material);
+
+			pipe = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 20, 32), new THREE.MeshNormalMaterial());
+			pipe.position.y = 10;
+			pipe.position.x = 15;
+			mesh.position.y = 5;
+			train.add(pipe);
+			train.add(mesh);
+			scene.add(train);
+
+			window.addEventListener('resize', onWindowResize, false);
+
+		}
+
+		function animate() {
+
+			/* 繞圈動畫
+			angle += 0.01;
+			train.rotation.y = angle + Math.PI/2;
+			train.position.set(60*Math.cos(angle), 0, -60*Math.sin(angle));
+			*/
+
+			var dt = clock.getDelta();
+			let temp = vel.clone(); //clone才能不覆蓋原值
+			temp.multiplyScalar(dt);
+			pos.add(temp);
+
+			temp = force.clone();
+			temp.multiplyScalar(dt);
+			vel.add(temp);
+
+			if (vel.length() > 0)
+				angle = Math.atan2(-vel.z, vel.x)
+
+			requestAnimationFrame(animate);
+			render();
+			update();
+
+		}
+
+		function mycalmp(value, min, max) { //速度上下限
+			if (value < min)
+				return min;
+			if (value > max)
+				return max;
+			return x;
+		}
+
+		function update() {
+
+			var move = clock.getDelta();
+
+			controls.update();
+
+		}
+
+		function onWindowResize() {
+
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+		}
+
+
+		function render() {
+
+			renderer.render(scene, camera);
+
+		}
+
+		javascript: (function () {
+			var script = document.createElement('script');
+			script.onload = function () {
+				var stats = new Stats();
+				document.body.appendChild(stats.dom);
+				requestAnimationFrame(function loop() {
+					stats.update();
+					requestAnimationFrame(loop)
+				});
+			};
+			script.src = '//rawgit.com/mrdoob/stats.js/master/build/stats.min.js';
+			document.head.appendChild(script);
+		})()
+	</script>
+
+</body>
+
+</html>
